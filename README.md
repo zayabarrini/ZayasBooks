@@ -7,6 +7,8 @@ https://docs.google.com/spreadsheets/d/1tTUbZ-ISPzVfrswkAPA6mstA2k4akDCsjXdtTfyk
 
 https://docs.google.com/spreadsheets/d/113-1Ls_pcuihgIwK29CKFaTdoSpEI5xp61bWzknMcOs/edit?usp=sharing
 
+# Organize Ebooks by Language/Theme: ./organize_ebooks.sh
+
 # Ebook Lists
 
 ar, ch, de, en, es, fr, gr, hb, hi, id, it, ja, jp, ko, la, ml, po, pt, ru, sw, tu
