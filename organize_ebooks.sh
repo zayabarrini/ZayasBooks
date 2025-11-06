@@ -1,11 +1,5 @@
 #!/bin/bash
 
-# adb push organize_ebooks.sh /sdcard/Books/
-# adb shell
-# cd /sdcard/Books/
-# sh organize_ebooks.sh
-# adb shell bash /sdcard/Books/organize_ebooks.sh
-
 # Get the current directory where the script is running
 CURRENT_DIR=$(pwd)
 
@@ -17,76 +11,149 @@ clean_empty_dirs() {
     fi
 }
 
+# Function to check if file is an ebook
+is_ebook() {
+    local file="$1"
+    local ebook_extensions="pdf epub mobi azw3 txt doc docx rtf djvu fb2 cbz cbr"
+    local extension=$(echo "${file##*.}" | tr '[:upper:]' '[:lower:]')
+    
+    for ext in $ebook_extensions; do
+        if [ "$extension" = "$ext" ]; then
+            return 0
+        fi
+    done
+    return 1
+}
+
 # Function to organize by theme
 organize_by_theme() {
-    # Get the script's own filename to exclude it from processing
-    script_name=$(basename "$0")
-    
-    # Create Theme directory if it doesn't exist
-    mkdir -p "Theme"
-    
-    # Find all files with the theme-filename-language pattern
-    find . -type f | while read -r file; do
-        if [[ "$(basename "$file")" == "$script_name" ]]; then
+    # Find all ebook files and organize by theme
+    find . -maxdepth 2 -type f -not -path "*/\.*" | while read -r file; do
+        filename=$(basename "$file")
+        script_name=$(basename "$0")
+        
+        # Skip script file and non-ebook files
+        if [[ "$filename" == "$script_name" ]] || ! is_ebook "$file"; then
             continue
         fi
+        
         # Extract theme name (first part before first hyphen)
-        theme=$(basename "$file" | cut -d'-' -f1)
+        theme=$(echo "$filename" | cut -d'-' -f1 | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+        
+        # Skip if no theme found or theme is empty
+        if [ -z "$theme" ] || [ "$theme" = "$filename" ]; then
+            continue
+        fi
+        
         # Replace underscores with spaces for folder name
         folder_name=$(echo "$theme" | tr '_' ' ')
         
         # Create theme folder if it doesn't exist
-        mkdir -p "Theme/$folder_name"
+        mkdir -p "$folder_name"
         
         # Move file to theme folder
-        mv "$file" "Theme/$folder_name/"
-    done 2>/dev/null
-
-    # Clean empty Language directories if they exist
-    clean_empty_dirs "Language"
-    
-    echo "Files have been organized by theme in the 'Theme' directory."
+        mv "$file" "$folder_name/" 2>/dev/null
+    done
 }
 
 # Function to organize by language
 organize_by_language() {
-    # Create Language directory if it doesn't exist
-    mkdir -p "Language"
-    
-    # Create language directories
-    for lang in ar ch de en es fr gr hb hi it ja ko po ru la pt ml id sw tu jp zh cn trans; do
-        mkdir -p "Language/$lang"
+    # Find all ebook files and organize by language
+    find . -maxdepth 2 -type f -not -path "*/\.*" | while read -r file; do
+        filename=$(basename "$file")
+        
+        # Skip non-ebook files
+        if ! is_ebook "$file"; then
+            continue
+        fi
+        
+        # Convert filename to lowercase for easier matching
+        lower_filename=$(echo "$filename" | tr '[:upper:]' '[:lower:]')
+        
+        # Check for language patterns and move files
+        case "$lower_filename" in
+            *-ar*|*arabic*)
+                mkdir -p "ar"
+                mv "$file" "ar/" 2>/dev/null
+                ;;
+            *-el*|*greek*|*-gr*)
+                mkdir -p "el"
+                mv "$file" "el/" 2>/dev/null
+                ;;
+            *-pl*|*polish*|*-po*)
+                mkdir -p "pl"
+                mv "$file" "pl/" 2>/dev/null
+                ;;
+            *-he*|*hebrew*|*-hb*)
+                mkdir -p "he"
+                mv "$file" "he/" 2>/dev/null
+                ;;
+            *-tr*|*turkish*|*-tu*)
+                mkdir -p "tr"
+                mv "$file" "tr/" 2>/dev/null
+                ;;
+            *-ch*|*-zh*|*-cn*|*chinese*)
+                mkdir -p "zh"
+                mv "$file" "zh/" 2>/dev/null
+                ;;
+            *-de*|*german*)
+                mkdir -p "de"
+                mv "$file" "de/" 2>/dev/null
+                ;;
+            *-en*|*english*)
+                mkdir -p "en"
+                mv "$file" "en/" 2>/dev/null
+                ;;
+            *-es*|*spanish*)
+                mkdir -p "es"
+                mv "$file" "es/" 2>/dev/null
+                ;;
+            *-fr*|*french*)
+                mkdir -p "fr"
+                mv "$file" "fr/" 2>/dev/null
+                ;;
+            *-hi*|*hindi*)
+                mkdir -p "hi"
+                mv "$file" "hi/" 2>/dev/null
+                ;;
+            *-it*|*italian*)
+                mkdir -p "it"
+                mv "$file" "it/" 2>/dev/null
+                ;;
+            *-ja*|*-jp*|*japanese*)
+                mkdir -p "ja"
+                mv "$file" "ja/" 2>/dev/null
+                ;;
+            *-ko*|*korean*)
+                mkdir -p "ko"
+                mv "$file" "ko/" 2>/dev/null
+                ;;
+            *-ru*|*russian*)
+                mkdir -p "ru"
+                mv "$file" "ru/" 2>/dev/null
+                ;;
+            *-pt*|*portuguese*)
+                mkdir -p "pt"
+                mv "$file" "pt/" 2>/dev/null
+                ;;
+            *-la*|*latin*)
+                mkdir -p "la"
+                mv "$file" "la/" 2>/dev/null
+                ;;
+            *-ml*|*malayalam*)
+                mkdir -p "ml"
+                mv "$file" "ml/" 2>/dev/null
+                ;;
+            *-id*|*indonesian*)
+                mkdir -p "id"
+                mv "$file" "id/" 2>/dev/null
+                ;;
+            *-sw*|*swahili*)
+                mkdir -p "sw"
+                mv "$file" "sw/" 2>/dev/null
+                ;;
+        esac
     done
-
-    # Move files based on language patterns using individual find commands
-    find . -type f -name "*-ar*" -exec mv {} "Language/ar/" \; 2>/dev/null
-    find . -type f -name "*-ch*" -exec mv {} "Language/ch/" \; 2>/dev/null
-    find . -type f -name "*-zh*" -exec mv {} "Language/zh/" \; 2>/dev/null
-    find . -type f -name "*-cn*" -exec mv {} "Language/cn/" \; 2>/dev/null
-    find . -type f -name "*-de*" -exec mv {} "Language/de/" \; 2>/dev/null
-    find . -type f -name "*-en*" -exec mv {} "Language/en/" \; 2>/dev/null
-    find . -type f -name "*-es*" -exec mv {} "Language/es/" \; 2>/dev/null
-    find . -type f -name "*-fr*" -exec mv {} "Language/fr/" \; 2>/dev/null
-    find . -type f -name "*-gr*" -exec mv {} "Language/gr/" \; 2>/dev/null
-    find . -type f -name "*-hb*" -exec mv {} "Language/hb/" \; 2>/dev/null
-    find . -type f -name "*-hi*" -exec mv {} "Language/hi/" \; 2>/dev/null
-    find . -type f -name "*-it*" -exec mv {} "Language/it/" \; 2>/dev/null
-    find . -type f -name "*-ja*" -exec mv {} "Language/ja/" \; 2>/dev/null
-    find . -type f -name "*-jp*" -exec mv {} "Language/jp/" \; 2>/dev/null
-    find . -type f -name "*-ko*" -exec mv {} "Language/ko/" \; 2>/dev/null
-    find . -type f -name "*-po*" -exec mv {} "Language/po/" \; 2>/dev/null
-    find . -type f -name "*-ru*" -exec mv {} "Language/ru/" \; 2>/dev/null
-    find . -type f -name "*-pt*" -exec mv {} "Language/pt/" \; 2>/dev/null
-    find . -type f -name "*-la*" -exec mv {} "Language/la/" \; 2>/dev/null
-    find . -type f -name "*-ml*" -exec mv {} "Language/ml/" \; 2>/dev/null
-    find . -type f -name "*-id*" -exec mv {} "Language/id/" \; 2>/dev/null
-    find . -type f -name "*-sw*" -exec mv {} "Language/sw/" \; 2>/dev/null
-    find . -type f -name "*-tu*" -exec mv {} "Language/tu/" \; 2>/dev/null
-
-    # Clean empty Theme directories if they exist
-    clean_empty_dirs "Theme"
-    
-    echo "Files have been organized by language in the 'Language' directory."
 }
 
 # Main menu
@@ -117,9 +184,7 @@ case $choice in
         ;;
 esac
 
-# Final cleanup of any empty directories
-clean_empty_dirs "Theme"
-clean_empty_dirs "Language"
+# Final cleanup of any empty directories that might have been created
+find . -maxdepth 1 -type d -empty -not -name ".*" -delete 2>/dev/null
 
 echo "Organization complete!"
-echo "Files are organized in: $CURRENT_DIR"
